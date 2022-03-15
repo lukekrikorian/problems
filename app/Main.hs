@@ -1,5 +1,6 @@
 module Main where
 import Data.Maybe (isNothing)
+import Data.List (tails)
 
 -- Assertion help
 check :: Bool -> IO ()
@@ -117,8 +118,73 @@ dropi :: [a] -> Int -> [a]
 dropi [] _ = []
 dropi l i = take (i - 1) l ++ dropi (drop i l) i
 
+-- 17: Split a list in two parts
+spl :: [a] -> Int -> ([a], [a])
+spl [] _ = ([], [])
+spl l 0 = ([], l)
+spl (x:xs) 1 = ([x], xs)
+spl (x:xs) i = (x: fst (spl xs (i - 1)), snd $ spl xs (i - 1))
+
+-- 18: Slice given two indices
+slice :: [a] -> Int -> Int -> [a]
+slice [] i k = []
+slice a@(x:xs) i k
+    | l < k = error "bad k"
+    | i < 1 = error "bad i"
+    | i > 1 = slice xs (i - 1) (k - 1)
+    | l > k = slice (init xs) 1 k
+    | otherwise = a
+    where l = length a
+
+-- 19: Rotate a list N places to the left
+rotl :: [a] -> Int -> [a]
+rotl [] _ = []
+rotl a@(x:xs) i
+    | i > 0 = rotl (xs ++ [x]) (i - 1)
+    | i < 0 = rotl (last a : init a) (i + 1)
+    | otherwise = a
+
+-- 20: Remove the k'th element
+rmkth :: Int -> [a] -> (a, [a])
+rmkth _ [] = error "empty list"
+rmkth k l = (last h, init h ++ t)
+    where (h, t) = splitAt k l
+
+-- 21: Insert after
+insat :: a -> [a] -> Int -> [a]
+insat x [] _ = [x]
+insat x l i = h ++ [x] ++ t
+    where (h, t) = splitAt (i - 1) l
+
+-- 22: List of integers in range
+range :: Int -> Int -> [Int]
+range f t
+    | f > t = []
+    | otherwise = f : range (f + 1) t
+
 main :: IO ()
 main = do
+    check $ range 4 4 == [4]
+    check $ range 4 9 == [4, 5, 6, 7, 8, 9]
+
+    check $ insat 'X' "abcd" 2 == "aXbcd"
+
+    check $ rmkth 4 "abcd" == ('d', "abc")
+    check $ rmkth 1 "abcd" == ('a', "bcd")
+    check $ rmkth 2 "abcd" == ('b', "acd")
+
+    check $ rotl "abcdefgh" (-2) == "ghabcdef"
+    check $ rotl "abcdefgh" 3 == "defghabc"
+
+    check $ slice [1, 2, 3, 4] 3 4 == [3, 4]
+    check $ slice [1, 2] 1 2 == [1, 2]
+    check $ slice "abcdefg" 3 7 == "cdefg"
+
+    check $ spl ([] :: [Int]) 2 == ([], [])
+    check $ spl [1, 5, 3] 2 == ([1, 5], [3])
+    check $ spl "12345" 0 == ([], "12345")
+    check $ spl "12345" 3 == ("123", "45")
+
     check $ dropi "abcdefghik" 3 == "abdeghk"
 
     check $ dupn [1, 1] 1 == [1, 1]
